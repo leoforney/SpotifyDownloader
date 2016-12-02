@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Spotify Downloader</string>
+    <string name="spotify_client_id">76ff80218ec042f084252a91a770382f</string>
+    <string name="sign_in_and_refresh_playlist_database">Sign-in and refresh playlist database</string>
+    <string name="download">Download</string>
+    <string name="youtube_client_id">1086270628677-1raopisaj8bcugnuof1eallh9cqog9g0.apps.googleusercontent.com</string>
+    <string name="youtube_public_api_key">AIzaSyDf0QrhAkOhxfmIVkQ_CBTxhMYsSn4dJ1s</string>
+</resources>
