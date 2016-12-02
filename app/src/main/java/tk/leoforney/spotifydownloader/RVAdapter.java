@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.github.rahatarmanahmed.cpv.CircularProgressView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,16 +17,7 @@ import java.util.List;
 
 public class RVAdapter extends RecyclerView.Adapter<RVAdapter.ViewHolder> {
 
-    List<PlaylistDownloadRequest> downloadRequestList;
-
-    public RVAdapter(List<PlaylistDownloadRequest> list) {
-        downloadRequestList = list;
-    }
-
-    public void updateRequestList(List<PlaylistDownloadRequest> list) {
-        this.downloadRequestList = list;
-        this.notifyDataSetChanged();
-    }
+    List<String> downloadRequestList = new ArrayList<>();
 
     @Override
     public RVAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -37,7 +29,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(RVAdapter.ViewHolder holder, int position) {
 
-        holder.playlistTextView.setText(downloadRequestList.get(position).playlist.name);
+        holder.playlistTextView.setText("test");
         holder.cpv.setProgress(1);
     }
 
