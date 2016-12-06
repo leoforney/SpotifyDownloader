@@ -17,7 +17,7 @@ import java.util.List;
 
 public class RVAdapter extends RecyclerView.Adapter<RVAdapter.ViewHolder> {
 
-    List<String> downloadRequestList = new ArrayList<>();
+    List<PlaylistDownload> downloads;
 
     @Override
     public RVAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -29,13 +29,13 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(RVAdapter.ViewHolder holder, int position) {
 
-        holder.playlistTextView.setText("test");
-        holder.cpv.setProgress(1);
+        holder.playlistTextView.setText(downloads.get(position).playlist.name);
+        holder.cpv.setProgress(downloads.get(position).status);
     }
 
     @Override
     public int getItemCount() {
-        return (null != downloadRequestList ? downloadRequestList.size() : 0);
+        return (null != downloads ? downloads.size() : 0);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

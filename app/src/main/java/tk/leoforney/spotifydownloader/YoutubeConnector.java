@@ -20,9 +20,6 @@ public class YoutubeConnector {
     private YouTube.Search.List query;
     private Context context;
 
-    // Your developer key goes here
-
-
     public YoutubeConnector(Context context) {
         this.context = context;
         youtube = new YouTube.Builder(new NetHttpTransport(), new JacksonFactory(), new HttpRequestInitializer() {

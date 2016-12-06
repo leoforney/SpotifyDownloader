@@ -2,7 +2,6 @@ package tk.leoforney.spotifydownloader;
 
 import android.Manifest;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -19,42 +18,36 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
-import com.google.common.io.Files;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Pager;
-import kaaes.spotify.webapi.android.models.Playlist;
 import kaaes.spotify.webapi.android.models.PlaylistSimple;
-import kaaes.spotify.webapi.android.models.TrackSimple;
 import kaaes.spotify.webapi.android.models.UserPrivate;
 
 import static com.spotify.sdk.android.authentication.LoginActivity.REQUEST_CODE;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    final static String TAG = MainActivity.class.getName();
+
     // Request code will be used to verify if result comes from the login activity. Can be set to any integer.
     private static final String REDIRECT_URI = "downloader://callback";
-    String CLIENT_ID;
-    private String token;
-    final static String TAG = MainActivity.class.getName();
+    String CLIENT_ID, token;
     Spinner playlistSpinner;
     CoordinatorLayout coordinatorLayout;
     RecyclerView recyclerView;
-    YoutubeConnector yc;
-    private static final int REQUEST_WRITE_PERMISSION = 786;
     static RVAdapter rvAdapter;
-    Pager<PlaylistSimple> allPlaylists;
-
-    SpotifyService spotify;
+    static Pager<PlaylistSimple> allPlaylists;
+    static YoutubeConnector yc;
+    static SpotifyService spotify;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,12 +63,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LinearLayoutManager llm = new LinearLayoutManager(getApplicationContext());
         recyclerView.setLayoutManager(llm);
         rvAdapter = new RVAdapter();
+
         recyclerView.setAdapter(rvAdapter);
 
         CLIENT_ID = getResources().getString(R.string.spotify_client_id);
 
         authenticateSpotify();
         requestPermission();
+
 
     }
 
@@ -111,13 +106,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (view.getId()) {
             case R.id.download:
                 PlaylistSimple selectedPlaylist = null;
-                for (PlaylistSimple iteratedPlaylist:allPlaylists.items) {
-                    if (playlistSpinner.getSelectedItem().equals(iteratedPlaylist.name)) selectedPlaylist = iteratedPlaylist;
-                }
-                File playlistPath = new File(Environment.getExternalStorageDirectory() + "/Music/" + selectedPlaylist.name);
+                for (PlaylistSimple iteratedPlaylist : allPlaylists.items)
+                    if (playlistSpinner.getSelectedItem().equals(iteratedPlaylist.name))
+                        selectedPlaylist = iteratedPlaylist;
+
+                // Database.json contains all of the downloaded songs and te relationship to a spotifytrack and youtubeitem
+                File playlistPath = new File(Environment.getExternalStorageDirectory() + "/Music/" + selectedPlaylist.name + "/Database.json");
                 if (!playlistPath.exists()) {
                     Snackbar.make(coordinatorLayout, "Downloading " + selectedPlaylist.name, Snackbar.LENGTH_SHORT).show();
-                    playlistPath.mkdir();
+                    playlistPath.getParentFile().mkdir();
+                    PlaylistDownload downloadRequest = new PlaylistDownload();
+                    downloadRequest.playlist = selectedPlaylist;
+                    yc = new YoutubeConnector(this);
+                    new AsyncTasks.downloadSongs().execute(downloadRequest);
                 } else {
                     int downloadedLength = playlistPath.listFiles().length;
                     Log.d(TAG, String.valueOf(downloadedLength + "-" + selectedPlaylist.tracks.total));
@@ -136,8 +137,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_PERMISSION);
-        } else {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 786);
         }
     }
 
@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     SpotifyApi api = new SpotifyApi();
                     api.setAccessToken(token);
                     spotify = api.getService();
-                    UserPrivate me = new getUser().execute().get();
+                    UserPrivate me = new AsyncTasks.getUser().execute().get();
 
                     Snackbar.make(coordinatorLayout, "Hello " + me.id + "!", Snackbar.LENGTH_SHORT).show();
                     Log.d(TAG, token);
@@ -168,31 +168,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    public static void updateRV(List<PlaylistDownload> downloads) {}
+    public static void setRV(PlaylistDownload download, int position) {}
+
 
     public void updateSpinner() throws Exception {
-        allPlaylists = new getPlaylists().execute().get();
+        allPlaylists = new AsyncTasks.getPlaylists().execute().get();
         List<String> names = new ArrayList<>();
         for (PlaylistSimple playlist : allPlaylists.items) {
             names.add(playlist.name);
         }
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.spinner_item, names);
         playlistSpinner.setAdapter(adapter);
-    }
-
-    public class getUser extends AsyncTask<Void, Void, UserPrivate> {
-
-        @Override
-        protected UserPrivate doInBackground(Void... voids) {
-            return spotify.getMe();
-        }
-    }
-
-    public class getPlaylists extends AsyncTask<Void, Void, Pager<PlaylistSimple>> {
-
-        @Override
-        protected Pager<PlaylistSimple> doInBackground(Void... voids) {
-            return spotify.getMyPlaylists();
-        }
     }
 }
 
