@@ -8,7 +8,6 @@ import android.widget.TextView;
 
 import com.github.rahatarmanahmed.cpv.CircularProgressView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

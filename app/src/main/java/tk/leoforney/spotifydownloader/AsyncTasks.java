@@ -1,9 +1,11 @@
 package tk.leoforney.spotifydownloader;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 
+import com.github.axet.vget.VGet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
@@ -19,7 +21,6 @@ import kaaes.spotify.webapi.android.models.PlaylistTrack;
 import kaaes.spotify.webapi.android.models.UserPrivate;
 
 import static tk.leoforney.spotifydownloader.MainActivity.spotify;
-import static tk.leoforney.spotifydownloader.MainActivity.yc;
 
 /**
  * Created by Dynamic Signals on 12/2/2016.
@@ -52,51 +53,73 @@ public class AsyncTasks {
         }
     }
 
-    public static class downloadSongs extends AsyncTask<PlaylistDownload, Float, Void> {
+    public static class downloadSongs extends AsyncTask<List<Object>, Float, Void> {
 
         String user, id;
         HashMap<String, Object> options;
         Pager<PlaylistTrack> trackPager;
 
         @Override
-        protected Void doInBackground(PlaylistDownload... downloads) {
-            user = downloads[0].playlist.owner.id;
-            id = downloads[0].playlist.id;
-            options = new HashMap<>();
-            trackPager = spotify.getPlaylistTracks(user, id);
-            int total = downloads[0].playlist.tracks.total;
-            int amountOfHundreds = Math.round(total / 100);
-            List<PlaylistTrack> allTracksInPlaylist = new ArrayList<>();
+        protected Void doInBackground(List<Object>... downloads) {
+            try {
+                PlaylistDownload downloadRequest = (PlaylistDownload) downloads[0].get(0);
+                Context context = (Context) downloads[0].get(1);
+                YoutubeConnector yc = new YoutubeConnector(context);
+                user = downloadRequest.playlist.owner.id;
+                id = downloadRequest.playlist.id;
+                options = new HashMap<>();
+                trackPager = spotify.getPlaylistTracks(user, id);
+                int total = downloadRequest.playlist.tracks.total;
+                int amountOfHundreds = Math.round(total / 100);
+                List<PlaylistTrack> allTracksInPlaylist = new ArrayList<>();
 
-            allTracksInPlaylist.addAll(spotify.getPlaylistTracks(user, id).items);
-            for (int i = 0; i < amountOfHundreds; i++) {
-                Log.d(TAG, "Code Ran!");
-                options.put("offset", 100*amountOfHundreds);
-                allTracksInPlaylist.addAll(spotify.getPlaylistTracks(user, id, options).items);
-            }
-            Log.d(TAG, String.valueOf(total + " - " + allTracksInPlaylist.size()));
+                allTracksInPlaylist.addAll(spotify.getPlaylistTracks(user, id).items);
+                for (int i = 0; i < amountOfHundreds; i++) {
+                    Log.d(TAG, "Code Ran!");
+                    options.put("offset", 100 * amountOfHundreds);
+                    allTracksInPlaylist.addAll(spotify.getPlaylistTracks(user, id, options).items);
+                }
+                Log.d(TAG, String.valueOf(total + " - " + allTracksInPlaylist.size()));
 
-            List<LocalSong> allLocalSongs = new ArrayList<>();
-            for (PlaylistTrack playlistTrack : allTracksInPlaylist) {
-                LocalSong song = new LocalSong();
-                song.track = playlistTrack;
-                song.searchItems = Lists.newArrayList(Iterables.limit(yc.search(playlistTrack.track.name + playlistTrack.track.artists.get(0).name), 5));
-                Log.d(TAG, song.track.track.name + ": " + song.searchItems.get(0).getTitle() + " - "
-                        + "https://youtube.com/watch?v=" + song.searchItems.get(0).getId());
-                song.track = playlistTrack;
-                allLocalSongs.add(song);
-            }
+                List<LocalSong> allLocalSongs = new ArrayList<>();
+                for (PlaylistTrack playlistTrack : allTracksInPlaylist) {
+                    LocalSong song = new LocalSong();
+                    song.track = playlistTrack;
+                    song.searchItems = Lists.newArrayList(Iterables.limit(yc.search(playlistTrack.track.name + "" + playlistTrack.track.artists.get(0).name), 5));
+                    if (song.searchItems.size() == 0) {
+                        song.searchItems = Lists.newArrayList(Iterables.limit(yc.search(playlistTrack.track.name + "" + playlistTrack.track.artists.get(0).name), 5));
+                        if (song.searchItems.size() == 0) {
+                            Log.d(TAG, "Could not find " + song.track.track.name + " on youtube");
+                        }
+                    }
 
+                    if (song.searchItems.size() != 0) {
+                        Log.d(TAG, song.track.track.name + ": " + song.searchItems.get(0).getTitle() + " - "
+                                + "https://youtube.com/watch?v=" + song.searchItems.get(0).getId());
+                        File downloadFile = new File(Environment.getExternalStorageDirectory() + "/Music/" + downloadRequest.playlist.name);
+                        URL downloadURL = new URL("https://www.youtube.com/watch?v=" + song.searchItems.get(0).getId());
+
+                        new VGet(downloadURL, downloadFile).download();
+                    }
+
+                    song.track = playlistTrack;
+                    allLocalSongs.add(song);
+                }
+
+            /*
             for (int e = 0; e < allLocalSongs.size(); e++) {
-                LocalSong song = allLocalSongs.get(e);
+                final LocalSong song = allLocalSongs.get(e);
                 try {
-                    File downloadFile = new File(Environment.getExternalStorageDirectory() + "/Music/" + downloads[0].playlist.name);
-                    URL downloadURL = new URL("https://www.youtube.com/watch?v=" + song.searchItems.get(0).getId());
-                    //new VGet(downloadURL, downloadFile).download();
+
                 } catch (Exception q) {
                     q.printStackTrace();
                 }
             }
+            */
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             return null;
         }
 

@@ -6,6 +6,16 @@
     android:layout_height="match_parent"
     tools:context="tk.leoforney.spotifydownloader.MainActivity">
 
+
+    <android.support.design.widget.CoordinatorLayout
+        android:id="@+id/snackbarPosition"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true">
+
+    </android.support.design.widget.CoordinatorLayout>
+
     <LinearLayout
         android:id="@+id/optionLinearLayout"
         android:layout_width="match_parent"
@@ -14,17 +24,21 @@
         android:paddingBottom="@dimen/activity_vertical_margin"
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin">
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:weightSum="1">
 
             <Spinner
                 android:id="@+id/playlistSpinner"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
 
             <Button
                 android:id="@+id/download"
@@ -41,15 +55,5 @@
 
         </android.support.v7.widget.RecyclerView>
     </LinearLayout>
-
-
-    <android.support.design.widget.CoordinatorLayout
-        android:id="@+id/snackbarPosition"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true">
-
-    </android.support.design.widget.CoordinatorLayout>
 
 </RelativeLayout>

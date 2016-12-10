@@ -12,6 +12,9 @@ android {
             storePassword 'daryleo1'
         }
     }
+    dexOptions {
+        incremental true
+    }
     compileSdkVersion 25
     buildToolsVersion "25.0.1"
     defaultConfig {
@@ -21,6 +24,9 @@ android {
         versionCode 1
         versionName "0.1-BETA"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        jackOptions {
+            enabled true
+        }
     }
     buildTypes {
         release {
@@ -32,9 +38,11 @@ android {
         }
     }
     compileOptions {
+        incremental true
         sourceCompatibility JavaVersion.VERSION_1_7
         targetCompatibility JavaVersion.VERSION_1_7
     }
+    useLibrary 'org.apache.http.legacy'
 }
 
 repositories {
@@ -62,7 +70,10 @@ dependencies {
     compile 'com.google.apis:google-api-services-youtube:v3-rev180-1.22.0'
     compile 'com.spotify.sdk:spotify-auth:beta23-noconnect-2.20b@aar'
     compile 'com.github.kaaes:spotify-web-api-android:0.4.1'
+    compile 'com.github.axet:vget:1.1.35'
+    compile 'com.wu-man:android-bsf-api:3.1'
 
     testCompile 'junit:junit:4.12'
 
+    compile files('libs/script-api-1.0.jar')
 }

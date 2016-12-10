@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     RecyclerView recyclerView;
     static RVAdapter rvAdapter;
     static Pager<PlaylistSimple> allPlaylists;
-    static YoutubeConnector yc;
     static SpotifyService spotify;
 
     @Override
@@ -54,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        findViewById(R.id.activity_main).setOnClickListener(this);
         findViewById(R.id.download).setOnClickListener(this);
         playlistSpinner = (Spinner) findViewById(R.id.playlistSpinner);
         coordinatorLayout = (CoordinatorLayout) findViewById(R.id.snackbarPosition);
@@ -70,8 +70,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         authenticateSpotify();
         requestPermission();
-
-
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -104,31 +102,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
 
         switch (view.getId()) {
+            case R.id.activity_main:
+                if (spotify == null) {
+                    authenticateSpotify();
+                }
+                break;
             case R.id.download:
-                PlaylistSimple selectedPlaylist = null;
-                for (PlaylistSimple iteratedPlaylist : allPlaylists.items)
-                    if (playlistSpinner.getSelectedItem().equals(iteratedPlaylist.name))
-                        selectedPlaylist = iteratedPlaylist;
+                if (spotify != null) {
+                    PlaylistSimple selectedPlaylist = null;
+                    for (PlaylistSimple iteratedPlaylist : allPlaylists.items)
+                        if (playlistSpinner.getSelectedItem().equals(iteratedPlaylist.name))
+                            selectedPlaylist = iteratedPlaylist;
 
-                // Database.json contains all of the downloaded songs and te relationship to a spotifytrack and youtubeitem
-                File playlistPath = new File(Environment.getExternalStorageDirectory() + "/Music/" + selectedPlaylist.name + "/Database.json");
-                if (!playlistPath.exists()) {
-                    Snackbar.make(coordinatorLayout, "Downloading " + selectedPlaylist.name, Snackbar.LENGTH_SHORT).show();
-                    playlistPath.getParentFile().mkdir();
-                    PlaylistDownload downloadRequest = new PlaylistDownload();
-                    downloadRequest.playlist = selectedPlaylist;
-                    yc = new YoutubeConnector(this);
-                    new AsyncTasks.downloadSongs().execute(downloadRequest);
-                } else {
-                    int downloadedLength = playlistPath.listFiles().length;
-                    Log.d(TAG, String.valueOf(downloadedLength + "-" + selectedPlaylist.tracks.total));
-                    if (selectedPlaylist.tracks.total != downloadedLength) {
-                        Snackbar.make(coordinatorLayout, "Playlist partially downloaded, updating now", Snackbar.LENGTH_SHORT).show();
+                    // Database.json contains all of the downloaded songs and te relationship to a spotifytrack and youtubeitem
+                    File playlistPath = new File(Environment.getExternalStorageDirectory() + "/Music/" + selectedPlaylist.name + "/Database.json");
+                    if (!playlistPath.exists()) {
+                        Snackbar.make(coordinatorLayout, "Downloading " + selectedPlaylist.name, Snackbar.LENGTH_SHORT).show();
+                        playlistPath.getParentFile().mkdir();
+                        PlaylistDownload downloadRequest = new PlaylistDownload();
+                        downloadRequest.playlist = selectedPlaylist;
+                        List<Object> objects = new ArrayList<>(2);
+                        objects.add(downloadRequest);
+                        objects.add(getApplicationContext());
+                        new AsyncTasks.downloadSongs().execute(objects);
                     } else {
-                        Log.d(TAG, String.valueOf(downloadedLength));
-                        Snackbar.make(coordinatorLayout, "Playlist already downloaded!", Snackbar.LENGTH_SHORT).show();
+                        int downloadedLength = playlistPath.listFiles().length;
+                        Log.d(TAG, String.valueOf(downloadedLength + "-" + selectedPlaylist.tracks.total));
+                        if (selectedPlaylist.tracks.total != downloadedLength) {
+                            Snackbar.make(coordinatorLayout, "Playlist partially downloaded, updating now", Snackbar.LENGTH_SHORT).show();
+                        } else {
+                            Log.d(TAG, String.valueOf(downloadedLength));
+                            Snackbar.make(coordinatorLayout, "Playlist already downloaded!", Snackbar.LENGTH_SHORT).show();
+                        }
                     }
                 }
+
 
                 break;
         }
@@ -167,10 +175,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }
-
-    public static void updateRV(List<PlaylistDownload> downloads) {}
-    public static void setRV(PlaylistDownload download, int position) {}
-
 
     public void updateSpinner() throws Exception {
         allPlaylists = new AsyncTasks.getPlaylists().execute().get();
