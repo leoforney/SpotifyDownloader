@@ -20,6 +20,7 @@ import kaaes.spotify.webapi.android.models.PlaylistSimple;
 import kaaes.spotify.webapi.android.models.PlaylistTrack;
 import kaaes.spotify.webapi.android.models.UserPrivate;
 
+import static tk.leoforney.spotifydownloader.MainActivity.rvAdapter;
 import static tk.leoforney.spotifydownloader.MainActivity.spotify;
 
 /**
@@ -53,17 +54,19 @@ public class AsyncTasks {
         }
     }
 
-    public static class downloadSongs extends AsyncTask<List<Object>, Float, Void> {
+    public static class downloadSongs extends AsyncTask<List<Object>, PlaylistDownload, Void> {
 
         String user, id;
         HashMap<String, Object> options;
         Pager<PlaylistTrack> trackPager;
+        int index;
 
         @Override
         protected Void doInBackground(List<Object>... downloads) {
             try {
                 PlaylistDownload downloadRequest = (PlaylistDownload) downloads[0].get(0);
                 Context context = (Context) downloads[0].get(1);
+                index = (Integer) downloads[0].get(2);
                 YoutubeConnector yc = new YoutubeConnector(context);
                 user = downloadRequest.playlist.owner.id;
                 id = downloadRequest.playlist.id;
@@ -75,7 +78,6 @@ public class AsyncTasks {
 
                 allTracksInPlaylist.addAll(spotify.getPlaylistTracks(user, id).items);
                 for (int i = 0; i < amountOfHundreds; i++) {
-                    Log.d(TAG, "Code Ran!");
                     options.put("offset", 100 * amountOfHundreds);
                     allTracksInPlaylist.addAll(spotify.getPlaylistTracks(user, id, options).items);
                 }
@@ -99,23 +101,17 @@ public class AsyncTasks {
                         File downloadFile = new File(Environment.getExternalStorageDirectory() + "/Music/" + downloadRequest.playlist.name);
                         URL downloadURL = new URL("https://www.youtube.com/watch?v=" + song.searchItems.get(0).getId());
 
-                        new VGet(downloadURL, downloadFile).download();
+                        //new VGet(downloadURL, downloadFile).download();
                     }
 
                     song.track = playlistTrack;
                     allLocalSongs.add(song);
-                }
 
-            /*
-            for (int e = 0; e < allLocalSongs.size(); e++) {
-                final LocalSong song = allLocalSongs.get(e);
-                try {
-
-                } catch (Exception q) {
-                    q.printStackTrace();
+                    float status = (allTracksInPlaylist.indexOf(playlistTrack) / (total-1));
+                    downloadRequest.status = status * 100;
+                    Log.d(TAG, String.valueOf(allTracksInPlaylist.indexOf(playlistTrack) + ":" + (total-1)));
+                    publishProgress(downloadRequest);
                 }
-            }
-            */
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -124,9 +120,16 @@ public class AsyncTasks {
         }
 
         @Override
-        protected void onProgressUpdate(Float... values) {
-            super.onProgressUpdate(values);
+        protected void onProgressUpdate(PlaylistDownload... download) {
 
+            for (PlaylistDownload iteratedDownload : rvAdapter.downloads) {
+                if (iteratedDownload.playlist.name.equals(download[0].playlist.name)) {
+                    iteratedDownload = download[0];
+                }
+            }
+
+            rvAdapter.notifyDataSetChanged();
+            super.onProgressUpdate(download);
         }
     }
 

@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
+import com.google.gson.Gson;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
@@ -68,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         CLIENT_ID = getResources().getString(R.string.spotify_client_id);
 
-        authenticateSpotify();
+        if (spotify == null) authenticateSpotify();
         requestPermission();
     }
 
@@ -120,10 +121,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Snackbar.make(coordinatorLayout, "Downloading " + selectedPlaylist.name, Snackbar.LENGTH_SHORT).show();
                         playlistPath.getParentFile().mkdir();
                         PlaylistDownload downloadRequest = new PlaylistDownload();
+                        downloadRequest.status = 0.01f;
                         downloadRequest.playlist = selectedPlaylist;
-                        List<Object> objects = new ArrayList<>(2);
+                        List<Object> objects = new ArrayList<>(3);
                         objects.add(downloadRequest);
                         objects.add(getApplicationContext());
+                        objects.add(rvAdapter.addDownload(downloadRequest));
+                        rvAdapter.notifyDataSetChanged();
                         new AsyncTasks.downloadSongs().execute(objects);
                     } else {
                         int downloadedLength = playlistPath.listFiles().length;
@@ -141,6 +145,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
 
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putString("token", token);
+        if (cachedPlaylistNames.size() != 0) {
+            savedInstanceState.putStringArrayList("names", cachedPlaylistNames);
+        }
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        SpotifyApi api = new SpotifyApi();
+        api.setAccessToken(savedInstanceState.getString("token"));
+        spotify = api.getService();
+        List<String> names = savedInstanceState.getStringArrayList("names");
+        cachedPlaylistNames = new ArrayList<>(names);
+        if (cachedPlaylistNames.size() != 0) {
+            try {
+                updateSpinner(cachedPlaylistNames);
+                allPlaylists = new AsyncTasks.getPlaylists().execute().get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        super.onRestoreInstanceState(savedInstanceState);
     }
 
     private void requestPermission() {
@@ -168,20 +200,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Snackbar.make(coordinatorLayout, "Hello " + me.id + "!", Snackbar.LENGTH_SHORT).show();
                     Log.d(TAG, token);
 
-                    updateSpinner();
+                    updateSpinner(getPlaylistNames());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }
     }
-
-    public void updateSpinner() throws Exception {
+    ArrayList<String> cachedPlaylistNames = new ArrayList<>();
+    public List<String> getPlaylistNames() throws Exception {
         allPlaylists = new AsyncTasks.getPlaylists().execute().get();
         List<String> names = new ArrayList<>();
         for (PlaylistSimple playlist : allPlaylists.items) {
             names.add(playlist.name);
         }
+        cachedPlaylistNames = new ArrayList<>(names);
+        return names;
+    }
+
+    public void updateSpinner(List<String> names) throws Exception {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.spinner_item, names);
         playlistSpinner.setAdapter(adapter);
     }
