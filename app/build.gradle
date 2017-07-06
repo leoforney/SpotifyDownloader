@@ -6,27 +6,22 @@ android {
     }
     signingConfigs {
         config {
-            keyAlias 'keystore'
-            keyPassword 'daryleo1'
-            storeFile file('C:/Users/Leo/.android/keystore.keystore')
-            storePassword 'daryleo1'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+            storeFile file('libs/ftc.debug.keystore')
+            storePassword 'android'
         }
     }
-    dexOptions {
-        incremental true
-    }
     compileSdkVersion 25
-    buildToolsVersion "25.0.1"
+    buildToolsVersion "25.0.2"
     defaultConfig {
         applicationId "tk.leoforney.spotifydownloader"
         minSdkVersion 21
         targetSdkVersion 25
+        multiDexEnabled true
         versionCode 1
         versionName "0.1-BETA"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        jackOptions {
-            enabled true
-        }
     }
     buildTypes {
         release {
@@ -38,15 +33,14 @@ android {
         }
     }
     compileOptions {
-        incremental true
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
-    useLibrary 'org.apache.http.legacy'
 }
 
 repositories {
     mavenCentral()
+    jcenter()
     flatDir {
         dirs 'libs'
     }
@@ -57,23 +51,31 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    // Design libraries
-    compile 'com.android.support:appcompat-v7:25.0.1'
-    compile 'com.android.support:design:25.0.1'
-    compile 'com.android.support:cardview-v7:25.0.1'
-    compile 'com.android.support:recyclerview-v7:25.0.1'
-    compile 'com.github.rahatarmanahmed:circularprogressview:2.5.0'
-    compile 'com.google.code.gson:gson:2.4'
-    // Who doesn't need gson?
-    compile 'com.google.oauth-client:google-oauth-client:1.22.0'
-    // Authentication library
-    compile 'com.google.apis:google-api-services-youtube:v3-rev180-1.22.0'
-    compile 'com.spotify.sdk:spotify-auth:beta23-noconnect-2.20b@aar'
-    compile 'com.github.kaaes:spotify-web-api-android:0.4.1'
-    compile 'com.github.axet:vget:1.1.35'
-    compile 'com.wu-man:android-bsf-api:3.1'
+    compile 'com.android.support:appcompat-v7:25.1.1'
+    compile 'com.android.support:cardview-v7:25.1.1'
+    compile 'com.android.support:design:25.1.1'
+    compile 'com.android.support:recyclerview-v7:25.1.1'
+    compile (
+            ['cz.msebera.android:httpclient:4.4.1.1'],
+            ['com.wu-man:android-bsf-api:3.1'],
+            ['com.github.kaaes:spotify-web-api-android:0.4.1'],
+            ['com.google.apis:google-api-services-youtube:v3-rev180-1.22.0'],
+            ['com.google.oauth-client:google-oauth-client:1.22.0'],
+            ['com.google.code.gson:gson:2.7'],
+            ['com.github.axet:vget:1.2.6'],
+            ['com.github.rahatarmanahmed:circularprogressview:2.5.0'],
+            ['com.android.support:multidex:1.0.0'],
+            ['com.spotify.android:auth:1.0.0-alpha'],
+            ['com.android.volley:volley:1.0.0']
+    )
+
 
     testCompile 'junit:junit:4.12'
 
-    compile files('libs/script-api-1.0.jar')
+}
+
+configurations.all {
+    exclude group: 'xpp3', module: 'xpp3_min'
+    exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+    exclude group: 'xmlpull', module: 'xmlpull'
 }

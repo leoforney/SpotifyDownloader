@@ -101,7 +101,7 @@ public class AsyncTasks {
                         File downloadFile = new File(Environment.getExternalStorageDirectory() + "/Music/" + downloadRequest.playlist.name);
                         URL downloadURL = new URL("https://www.youtube.com/watch?v=" + song.searchItems.get(0).getId());
 
-                        //new VGet(downloadURL, downloadFile).download();
+                        new VGet(downloadURL, downloadFile).download();
                     }
 
                     song.track = playlistTrack;
@@ -109,7 +109,7 @@ public class AsyncTasks {
 
                     float status = (allTracksInPlaylist.indexOf(playlistTrack) / (total-1));
                     downloadRequest.status = status * 100;
-                    Log.d(TAG, String.valueOf(allTracksInPlaylist.indexOf(playlistTrack) + ":" + (total-1)));
+                    Log.d(TAG, String.valueOf(allTracksInPlaylist.indexOf(playlistTrack) + "/" + (total-1)));
                     publishProgress(downloadRequest);
                 }
             } catch (Exception e) {
