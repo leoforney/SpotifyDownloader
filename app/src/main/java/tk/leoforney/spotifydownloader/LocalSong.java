@@ -1,6 +1,7 @@
 package tk.leoforney.spotifydownloader;
 
 import java.io.File;
+import java.net.URL;
 import java.util.List;
 
 import kaaes.spotify.webapi.android.models.PlaylistTrack;
@@ -10,7 +11,10 @@ import kaaes.spotify.webapi.android.models.PlaylistTrack;
  */
 
 public class LocalSong {
-    List<VideoItem> searchItems;
-    PlaylistTrack track;
-    File downloadLocaiton;
+    public List<VideoItem> searchItems;
+    public PlaylistTrack track;
+    public File downloadLocaiton;
+    public transient String fileContent;
+    public transient boolean correctlyDownloaded;
+    public transient String downloadURL;
 }

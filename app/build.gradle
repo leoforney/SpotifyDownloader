@@ -36,6 +36,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    dexOptions {
+        preDexLibraries = false
+    }
 }
 
 repositories {
@@ -62,11 +65,13 @@ dependencies {
             ['com.google.apis:google-api-services-youtube:v3-rev180-1.22.0'],
             ['com.google.oauth-client:google-oauth-client:1.22.0'],
             ['com.google.code.gson:gson:2.7'],
-            ['com.github.axet:vget:1.2.6'],
             ['com.github.rahatarmanahmed:circularprogressview:2.5.0'],
             ['com.android.support:multidex:1.0.0'],
             ['com.spotify.android:auth:1.0.0-alpha'],
-            ['com.android.volley:volley:1.0.0']
+            ['com.android.volley:volley:1.0.0'],
+            ['com.google.guava:guava:20.0'],
+            ['com.squareup.okhttp3:okhttp:3.8.1'],
+            ['commons-io:commons-io:2.5']
     )
 
 
@@ -78,4 +83,5 @@ configurations.all {
     exclude group: 'xpp3', module: 'xpp3_min'
     exclude group: 'org.apache.httpcomponents', module: 'httpclient'
     exclude group: 'xmlpull', module: 'xmlpull'
+    exclude module: 'guava-jdk5'
 }
