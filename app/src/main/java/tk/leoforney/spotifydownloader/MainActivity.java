@@ -18,11 +18,15 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
+import com.google.common.io.Files;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -109,33 +113,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.download:
                 if (spotify != null) {
-                    PlaylistSimple selectedPlaylist = null;
-                    for (PlaylistSimple iteratedPlaylist : allPlaylists.items)
-                        if (playlistSpinner.getSelectedItem().equals(iteratedPlaylist.name))
-                            selectedPlaylist = iteratedPlaylist;
+                    boolean playlistAlreadyDownloaded = false;
+                    for (PlaylistDownload playlistDownload : rvAdapter.downloads) {
+                        if (playlistDownload.playlist.name.equals(playlistSpinner.getSelectedItem()))
+                            playlistAlreadyDownloaded = true;
+                    }
+                    if (!playlistAlreadyDownloaded) {
+                        PlaylistSimple selectedPlaylist = null;
+                        for (PlaylistSimple iteratedPlaylist : allPlaylists.items)
+                            if (playlistSpinner.getSelectedItem().equals(iteratedPlaylist.name))
+                                selectedPlaylist = iteratedPlaylist;
 
-                    // Database.json contains all of the downloaded songs and te relationship to a spotifytrack and youtubeitem
-                    File playlistPath = new File(Environment.getExternalStorageDirectory() + "/Music/" + selectedPlaylist.name + "/Database.json");
-                    if (!playlistPath.exists()) {
-                        Snackbar.make(coordinatorLayout, "Downloading " + selectedPlaylist.name, Snackbar.LENGTH_SHORT).show();
-                        playlistPath.getParentFile().mkdir();
-                        PlaylistDownload downloadRequest = new PlaylistDownload();
-                        downloadRequest.status = 0.01f;
-                        downloadRequest.playlist = selectedPlaylist;
-                        List<Object> objects = new ArrayList<>(3);
-                        objects.add(downloadRequest);
-                        objects.add(getApplicationContext());
-                        objects.add(rvAdapter.addDownload(downloadRequest));
-                        rvAdapter.notifyDataSetChanged();
-                        new AsyncTasks.downloadSongs().execute(objects);
-                    } else {
-                        int downloadedLength = playlistPath.listFiles().length;
-                        Log.d(TAG, String.valueOf(downloadedLength + "-" + selectedPlaylist.tracks.total));
-                        if (selectedPlaylist.tracks.total != downloadedLength) {
-                            Snackbar.make(coordinatorLayout, "Playlist partially downloaded, updating now", Snackbar.LENGTH_SHORT).show();
+                        // Database.json contains all of the downloaded songs and the relationship to a spotifytrack and youtubeitem
+                        File playlistPath = new File(Environment.getExternalStorageDirectory() + "/Music/" + selectedPlaylist.name + "/Database.json");
+                        if (!playlistPath.exists()) {
+                            Snackbar.make(coordinatorLayout, "Downloading " + selectedPlaylist.name, Snackbar.LENGTH_SHORT).show();
+                            playlistPath.getParentFile().mkdir();
+                            PlaylistDownload downloadRequest = new PlaylistDownload();
+                            downloadRequest.status = 0f;
+                            downloadRequest.playlist = selectedPlaylist;
+                            List<Object> objects = new ArrayList<>(3);
+                            objects.add(downloadRequest);
+                            objects.add(getApplicationContext());
+                            objects.add(rvAdapter.addDownload(downloadRequest));
+                            rvAdapter.notifyDataSetChanged();
+                            new AsyncTasks.downloadSongs().execute(objects);
                         } else {
-                            Log.d(TAG, String.valueOf(downloadedLength));
-                            Snackbar.make(coordinatorLayout, "Playlist already downloaded!", Snackbar.LENGTH_SHORT).show();
+                            int downloadedLength = playlistPath.listFiles().length;
+                            Log.d(TAG, String.valueOf(downloadedLength + "-" + selectedPlaylist.tracks.total));
+                            if (selectedPlaylist.tracks.total != downloadedLength) {
+                                Snackbar.make(coordinatorLayout, "Playlist partially downloaded, updating now", Snackbar.LENGTH_SHORT).show();
+                            } else {
+                                Log.d(TAG, String.valueOf(downloadedLength));
+                                Snackbar.make(coordinatorLayout, "Playlist already downloaded!", Snackbar.LENGTH_SHORT).show();
+                            }
                         }
                     }
                 }
@@ -200,6 +211,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Log.d(TAG, token);
 
                     updateSpinner(getPlaylistNames());
+
+                    File musicDirectory = new File(Environment.getExternalStorageDirectory() + "/Music/");
+
+                    for (File iteratedFile: musicDirectory.listFiles()) {
+                        if (iteratedFile.isDirectory()) {
+                            File databaseFile = new File(iteratedFile + File.separator + "Database.json");
+                            if (databaseFile.exists()) {
+                                Log.d(TAG, iteratedFile.getName() + " is a downloaded playlist!");
+                                PlaylistSimple matchedPlayllist = null;
+                                for (PlaylistSimple iteratedPlaylist : allPlaylists.items) {
+                                    if (iteratedPlaylist.name.equals(iteratedFile.getName())) {
+                                        matchedPlayllist = iteratedPlaylist;
+                                        Log.d(TAG, "Matched with " + matchedPlayllist.name + " by " + matchedPlayllist.owner.display_name);
+                                    }
+                                }
+                                if (matchedPlayllist != null) {
+                                    PlaylistDownload downloadRequest = new PlaylistDownload();
+                                    downloadRequest.playlist = matchedPlayllist;
+                                    Gson gson = new Gson();
+                                    Type type = new TypeToken<ArrayList<LocalSong>>(){}.getType();
+                                    float downloadedLength = ((List<LocalSong>) gson.fromJson(new String(Files.toByteArray(databaseFile)), type)).size();
+                                    Log.d(TAG, matchedPlayllist.name + " has " + String.valueOf(downloadedLength) + "downloaded songs");
+                                    downloadRequest.status = (downloadedLength / matchedPlayllist.tracks.total) * 100;
+                                    rvAdapter.addDownload(downloadRequest);
+                                    rvAdapter.notifyDataSetChanged();
+                                }
+                            }
+                        }
+                    }
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

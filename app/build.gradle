@@ -68,10 +68,10 @@ dependencies {
             ['com.github.rahatarmanahmed:circularprogressview:2.5.0'],
             ['com.android.support:multidex:1.0.0'],
             ['com.spotify.android:auth:1.0.0-alpha'],
-            ['com.android.volley:volley:1.0.0'],
             ['com.google.guava:guava:20.0'],
             ['com.squareup.okhttp3:okhttp:3.8.1'],
-            ['commons-io:commons-io:2.5']
+            ['commons-io:commons-io:2.5'],
+            ['com.github.TR4Android:Swipeable-RecyclerView:0.2.0']
     )
 
 

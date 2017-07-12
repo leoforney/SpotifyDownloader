@@ -11,7 +11,7 @@ import kaaes.spotify.webapi.android.models.PlaylistTrack;
  */
 
 public class LocalSong {
-    public List<VideoItem> searchItems;
+    public transient List<VideoItem> searchItems;
     public PlaylistTrack track;
     public File downloadLocaiton;
     public transient String fileContent;

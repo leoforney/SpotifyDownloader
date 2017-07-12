@@ -8,5 +8,5 @@ import kaaes.spotify.webapi.android.models.PlaylistSimple;
 
 public class PlaylistDownload {
     PlaylistSimple playlist;
-    Float status;
+    Float status = 0f;
 }
